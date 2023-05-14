@@ -260,4 +260,4 @@ auto loader = streamfx::loader(
 	[]() { // Finalizer
 		loader_instance.reset();
 	},
-	std::numeric_limits<streamfx::loader_priority_t>::min());
+	streamfx::loader_priority::HIGHEST);
