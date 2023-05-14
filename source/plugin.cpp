@@ -100,7 +100,7 @@ namespace streamfx {
 		return finalizers;
 	}
 
-	loader::loader(loader_function_t initializer, loader_function_t finalizer, int32_t priority)
+	loader::loader(loader_function_t initializer, loader_function_t finalizer, loader_priority_t priority)
 	{
 		auto init_kv = get_initializers().find(priority);
 		if (init_kv != get_initializers().end()) {
@@ -109,11 +109,12 @@ namespace streamfx {
 			get_initializers().emplace(priority, loader_list_t{initializer});
 		}
 
-		auto fina_kv = get_finalizers().find(-priority);
+		auto ipriority = priority ^ static_cast<loader_priority_t>(0xFFFFFFFFFFFFFFFF);
+		auto fina_kv   = get_finalizers().find(ipriority);
 		if (fina_kv != get_finalizers().end()) {
 			fina_kv->second.push_back(finalizer);
 		} else {
-			get_finalizers().emplace(-priority, loader_list_t{finalizer});
+			get_finalizers().emplace(ipriority, loader_list_t{finalizer});
 		}
 	}
 } // namespace streamfx
@@ -125,7 +126,6 @@ MODULE_EXPORT bool obs_module_load(void)
 
 		// Run all initializers in forward order.
 		for (auto kv : streamfx::get_initializers()) {
-			DLOG_INFO("%ld", kv.first);
 			for (auto init : kv.second) {
 				try {
 					init();
@@ -329,7 +329,6 @@ MODULE_EXPORT void obs_module_unload(void)
 
 		// Run all initializers in forward order.
 		for (auto kv : streamfx::get_finalizers()) {
-			DLOG_INFO("%ld", kv.first);
 			for (auto init : kv.second) {
 				try {
 					init();

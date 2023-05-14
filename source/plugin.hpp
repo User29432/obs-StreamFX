@@ -17,13 +17,13 @@ namespace streamfx {
 	typedef std::function<void()> loader_function_t;
 	enum loader_priority : loader_priority_t {
 		HIGHEST = INT32_MIN,
-		HIGHER  = INT32_MIN / 2,
-		HIGH    = INT32_MIN / 3,
+		HIGHER  = INT32_MIN / 4 * 3,
+		HIGH    = INT32_MIN / 4 * 2,
 		ABOVE   = INT32_MIN / 4,
 		NORMAL  = 0,
 		BELOW   = INT32_MAX / 4,
-		LOW     = INT32_MAX / 3,
-		LOWER   = INT32_MAX / 2,
+		LOW     = INT32_MAX / 4 * 2,
+		LOWER   = INT32_MAX / 4 * 3,
 		LOWEST  = INT32_MAX,
 	};
 
