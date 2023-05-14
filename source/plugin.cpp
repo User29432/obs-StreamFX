@@ -137,9 +137,6 @@ MODULE_EXPORT bool obs_module_load(void)
 			}
 		}
 
-		// Initialize global configuration.
-		streamfx::configuration::initialize();
-
 		// Initialize Source Tracker
 		_source_tracker = streamfx::obs::source_tracker::get();
 
@@ -329,9 +326,6 @@ MODULE_EXPORT void obs_module_unload(void)
 		//#ifdef ENABLE_UPDATER
 		//	_updater.reset();
 		//#endif
-
-		// Finalize Configuration
-		streamfx::configuration::finalize();
 
 		// Run all initializers in forward order.
 		for (auto kv : streamfx::get_finalizers()) {
