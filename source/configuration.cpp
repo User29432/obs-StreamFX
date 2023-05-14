@@ -97,8 +97,8 @@ std::shared_ptr<streamfx::configuration> streamfx::configuration::instance()
 	static std::weak_ptr<streamfx::configuration> winst;
 	static std::mutex                             mtx;
 
-	std::unique_lock<decltype(mtx)>          lock(mtx);
-	std::shared_ptr<streamfx::configuration> instance = winst.lock();
+	std::unique_lock<decltype(mtx)> lock(mtx);
+	auto                            instance = winst.lock();
 	if (!instance) {
 		instance = std::shared_ptr<streamfx::configuration>(new streamfx::configuration());
 		winst    = instance;

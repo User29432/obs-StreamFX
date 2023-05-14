@@ -242,8 +242,8 @@ std::shared_ptr<streamfx::util::threadpool::threadpool> streamfx::util::threadpo
 	static std::weak_ptr<streamfx::util::threadpool::threadpool> winst;
 	static std::mutex                                            mtx;
 
-	std::unique_lock<decltype(mtx)>                         lock(mtx);
-	std::shared_ptr<streamfx::util::threadpool::threadpool> instance = winst.lock();
+	std::unique_lock<decltype(mtx)> lock(mtx);
+	auto                            instance = winst.lock();
 	if (!instance) {
 		instance = std::shared_ptr<streamfx::util::threadpool::threadpool>(new streamfx::util::threadpool::threadpool());
 		winst    = instance;
