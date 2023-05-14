@@ -81,9 +81,8 @@
 #include <stdexcept>
 #include "warning-enable.hpp"
 
-static std::shared_ptr<streamfx::util::threadpool::threadpool> _threadpool;
-static std::shared_ptr<streamfx::gfx::opengl>                  _streamfx_gfx_opengl;
-static std::shared_ptr<streamfx::obs::source_tracker>          _source_tracker;
+static std::shared_ptr<streamfx::gfx::opengl>         _streamfx_gfx_opengl;
+static std::shared_ptr<streamfx::obs::source_tracker> _source_tracker;
 
 namespace streamfx {
 	typedef std::list<loader_function_t>               loader_list_t;
@@ -110,11 +109,11 @@ namespace streamfx {
 			get_initializers().emplace(priority, loader_list_t{initializer});
 		}
 
-		auto fina_kv = get_finalizers().find(priority);
+		auto fina_kv = get_finalizers().find(-priority);
 		if (fina_kv != get_finalizers().end()) {
 			fina_kv->second.push_back(finalizer);
 		} else {
-			get_finalizers().emplace(priority, loader_list_t{finalizer});
+			get_finalizers().emplace(-priority, loader_list_t{finalizer});
 		}
 	}
 } // namespace streamfx
@@ -124,11 +123,22 @@ MODULE_EXPORT bool obs_module_load(void)
 	try {
 		DLOG_INFO("Loading Version %s", STREAMFX_VERSION_STRING);
 
+		// Run all initializers in forward order.
+		for (auto kv : streamfx::get_initializers()) {
+			DLOG_INFO("%ld", kv.first);
+			for (auto init : kv.second) {
+				try {
+					init();
+				} catch (const std::exception& ex) {
+					DLOG_ERROR("Initializer threw exception: %s", ex.what());
+				} catch (...) {
+					DLOG_ERROR("Initializer threw unknown exception.");
+				}
+			}
+		}
+
 		// Initialize global configuration.
 		streamfx::configuration::initialize();
-
-		// Initialize global Thread Pool.
-		_threadpool = std::make_shared<streamfx::util::threadpool::threadpool>();
 
 		// Initialize Source Tracker
 		_source_tracker = streamfx::obs::source_tracker::get();
@@ -323,8 +333,19 @@ MODULE_EXPORT void obs_module_unload(void)
 		// Finalize Configuration
 		streamfx::configuration::finalize();
 
-		// Finalize Thread Pool
-		_threadpool.reset();
+		// Run all initializers in forward order.
+		for (auto kv : streamfx::get_finalizers()) {
+			DLOG_INFO("%ld", kv.first);
+			for (auto init : kv.second) {
+				try {
+					init();
+				} catch (const std::exception& ex) {
+					DLOG_ERROR("Finalizer threw exception: %s", ex.what());
+				} catch (...) {
+					DLOG_ERROR("Finalizer threw unknown exception.");
+				}
+			}
+		}
 
 		DLOG_INFO("Unloaded Version %s", STREAMFX_VERSION_STRING);
 	} catch (std::exception const& ex) {
@@ -336,7 +357,7 @@ MODULE_EXPORT void obs_module_unload(void)
 
 std::shared_ptr<streamfx::util::threadpool::threadpool> streamfx::threadpool()
 {
-	return _threadpool;
+	return streamfx::util::threadpool::threadpool::instance();
 }
 
 std::filesystem::path streamfx::data_file_path(std::string_view file)

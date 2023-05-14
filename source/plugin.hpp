@@ -10,12 +10,16 @@
 #include "warning-enable.hpp"
 
 namespace streamfx {
-	typedef int32_t loader_priority_t;
+	/** Simple but efficient loader structure for ordered initia-/finalize.
+	 * 
+	 */
+	typedef int32_t               loader_priority_t;
 	typedef std::function<void()> loader_function_t;
-
-	class loader {
-		public:
+	struct loader {
 		loader(loader_function_t initializer, loader_function_t finalizer, loader_priority_t priority);
+
+		// Usage:
+		// auto loader = streamfx::loader([]() { ... }, []() { ... }, 0);
 	};
 
 	// Threadpool

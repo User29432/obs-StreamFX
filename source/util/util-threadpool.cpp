@@ -6,6 +6,7 @@
 
 #include "util-threadpool.hpp"
 #include "common.hpp"
+#include "plugin.hpp"
 #include "util/util-logging.hpp"
 
 #include "warning-disable.hpp"
@@ -235,3 +236,28 @@ void streamfx::util::threadpool::threadpool::work(std::shared_ptr<worker_info> w
 		}
 	}
 }
+
+std::shared_ptr<streamfx::util::threadpool::threadpool> streamfx::util::threadpool::threadpool::instance()
+{
+	static std::weak_ptr<streamfx::util::threadpool::threadpool> winst;
+	static std::mutex                                            mtx;
+
+	std::unique_lock<decltype(mtx)>                         lock(mtx);
+	std::shared_ptr<streamfx::util::threadpool::threadpool> instance = winst.lock();
+	if (!instance) {
+		instance = std::shared_ptr<streamfx::util::threadpool::threadpool>(new streamfx::util::threadpool::threadpool());
+		winst    = instance;
+	}
+	return instance;
+};
+
+std::shared_ptr<streamfx::util::threadpool::threadpool> loader_instance;
+
+auto loader = streamfx::loader(
+	[]() { // Initalizer
+		loader_instance = streamfx::util::threadpool::threadpool::instance();
+	},
+	[]() { // Finalizer
+		loader_instance.reset();
+	},
+	std::numeric_limits<streamfx::loader_priority_t>::min());
