@@ -76,12 +76,48 @@
 
 #include "warning-disable.hpp"
 #include <fstream>
+#include <list>
+#include <map>
 #include <stdexcept>
 #include "warning-enable.hpp"
 
 static std::shared_ptr<streamfx::util::threadpool::threadpool> _threadpool;
 static std::shared_ptr<streamfx::gfx::opengl>                  _streamfx_gfx_opengl;
 static std::shared_ptr<streamfx::obs::source_tracker>          _source_tracker;
+
+namespace streamfx {
+	typedef std::list<loader_function_t>               loader_list_t;
+	typedef std::map<loader_priority_t, loader_list_t> loader_map_t;
+
+	loader_map_t& get_initializers()
+	{
+		static loader_map_t initializers;
+		return initializers;
+	}
+
+	loader_map_t& get_finalizers()
+	{
+		static loader_map_t finalizers;
+		return finalizers;
+	}
+
+	loader::loader(loader_function_t initializer, loader_function_t finalizer, int32_t priority)
+	{
+		auto init_kv = get_initializers().find(priority);
+		if (init_kv != get_initializers().end()) {
+			init_kv->second.push_back(initializer);
+		} else {
+			get_initializers().emplace(priority, loader_list_t{initializer});
+		}
+
+		auto fina_kv = get_finalizers().find(priority);
+		if (fina_kv != get_finalizers().end()) {
+			fina_kv->second.push_back(finalizer);
+		} else {
+			get_finalizers().emplace(priority, loader_list_t{finalizer});
+		}
+	}
+} // namespace streamfx
 
 MODULE_EXPORT bool obs_module_load(void)
 {
