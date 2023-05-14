@@ -219,11 +219,6 @@ MODULE_EXPORT bool obs_module_load(void)
 #endif
 		}
 
-// Frontend
-#ifdef ENABLE_FRONTEND
-		streamfx::ui::handler::initialize();
-#endif
-
 		DLOG_INFO("Loaded Version %s", STREAMFX_VERSION_STRING);
 		return true;
 	} catch (std::exception const& ex) {
@@ -239,11 +234,6 @@ MODULE_EXPORT void obs_module_unload(void)
 {
 	try {
 		DLOG_INFO("Unloading Version %s", STREAMFX_VERSION_STRING);
-
-		// Frontend
-#ifdef ENABLE_FRONTEND
-		streamfx::ui::handler::finalize();
-#endif
 
 		// Transitions
 		{
